@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CRM API Portal{% endblock %}
+
+{% block content %}
+<div class="dash-wrap">
+  <div class="welcome">
+    <div class="avatar" id="avatar">?</div>
+    <div>
+      <h2 id="welcome-name">Bienvenido</h2>
+      <p id="welcome-email">—</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <a href="/portal/docs" class="card">
+      <div class="card-icon">📄</div>
+      <h3>Documentación de APIs</h3>
+      <p>Explora todos los endpoints disponibles con Swagger UI. Prueba las APIs directamente desde el navegador.</p>
+      <div class="arrow">→ Abrir Swagger UI</div>
+    </a>
+    <a href="/portal/reportes" class="card">
+      <div class="card-icon">📊</div>
+      <h3>Reportes de Actividad</h3>
+      <p>Consulta el historial de accesos a las APIs: IP, dispositivo, endpoints y fechas. Exporta a CSV.</p>
+      <div class="arrow">→ Ver reportes</div>
+    </a>
+    <div class="card" onclick="copyToken()">
+      <div class="card-icon">🔑</div>
+      <h3>Mi Token JWT</h3>
+      <p>Tu token de acceso para autenticarte en las APIs. Válido por 8 horas. Haz clic para copiarlo.</p>
+      <div class="arrow">→ Copiar token</div>
+    </div>
+  </div>
+
+  <!-- Token Box — oculta el token completo por seguridad -->
+  <div class="token-box">
+    <h3>Token de acceso</h3>
+    <div class="token-display" id="token-display">—</div>
+    <button class="copy-btn" onclick="copyToken()">📋 Copiar token al portapapeles</button>
+  </div>
+
+  <div class="privacy-card">
+    🔒 <strong>Aviso de Privacidad y Seguridad:</strong><br>
+    Toda tu actividad en este portal es registrada automáticamente con fines de seguridad y auditoría.
+    Esta información es confidencial y solo accesible para administradores del sistema.
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function() {
+    if (!window.checkAuth) { window.location.href = '/portal/login'; return; }
+    if (!checkAuth()) return;
+
+    const token = localStorage.getItem('api_token');
+    const user  = JSON.parse(localStorage.getItem('api_user') || 'null');
+
+    const nombre = user?.nombre_completo || user?.nombre || 'Usuario';
+    const el = (id) => document.getElementById(id);
+
+    if (el('welcome-name'))  el('welcome-name').textContent  = 'Hola, ' + nombre.split(' ')[0];
+    if (el('welcome-email')) el('welcome-email').textContent = user?.email || '';
+    if (el('avatar'))        el('avatar').textContent        = nombre.charAt(0).toUpperCase();
+
+    // Mostrar token truncado — nunca el completo en pantalla
+    const tokenDisplay = el('token-display');
+    if (tokenDisplay && token) {
+      tokenDisplay.textContent = token.slice(0, 20) + '••••••••••••••••••••••••••••••' + token.slice(-10);
+    }
+
+    window.copyToken = function() {
+      if (!token) return;
+      navigator.clipboard.writeText(token).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = '✓ ¡Copiado!';
+          setTimeout(() => btn.textContent = orig, 2000);
+        }
+      });
+    };
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Iniciar Sesión — CRM API Portal{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>Acceso al Portal</h1>
+      <p>Inicia sesión para consultar las APIs del CRM</p>
+    </div>
+    <div class="auth-body">
+      <div class="privacy-notice">
+        🔒 <strong>Aviso:</strong> Tu IP, navegador y actividad quedan registrados con fines de auditoría y seguridad.
+      </div>
+
+      <div class="alert alert-error" id="alert-error"></div>
+
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" id="email" placeholder="usuario@empresa.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">
+        Iniciar Sesión
+      </button>
+
+      <div class="divider"></div>
+      <div class="form-footer">
+        ¿No tienes cuenta? <a href="/portal/register">Regístrate aquí</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function() {
+    const existingToken = localStorage.getItem('api_token');
+    if (existingToken) {
+      window.location.href = '/portal/dashboard';
+      return;
+    }
+
+    document.addEventListener('keypress', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    window.doLogin = async function() {
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('btn-login');
+      const alertEl  = document.getElementById('alert-error');
+
+      if (alertEl) alertEl.classList.remove('show');
+
+      if (!email || !password) {
+        showError('Completa todos los campos.');
+        return;
+      }
+
+      btn.textContent = 'Verificando...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        let data;
+        try { data = await res.json(); }
+        catch(e) { throw new Error('Respuesta inválida del servidor'); }
+
+        if (res.ok && data.success) {
+          localStorage.setItem('api_token', data.token);
+          localStorage.setItem('api_user', JSON.stringify(data.user));
+          window.location.href = '/portal/dashboard';
+        } else {
+          showError(data.error || 'Credenciales incorrectas.');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showError('Error de conexión. Intenta nuevamente.');
+      } finally {
+        btn.textContent = 'Iniciar Sesión';
+        btn.disabled = false;
+      }
+    };
+
+    function showError(msg) {
+      const el = document.getElementById('alert-error');
+      if (el) { el.textContent = msg; el.classList.add('show'); }
+    }
+  })();
+</script>
+{% endblock %}

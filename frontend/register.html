@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Registro — CRM API Portal{% endblock %}
+
+{% block extra_head %}
+<style>
+    .pass-strength {
+        height: 3px;
+        border-radius: 2px;
+        margin-top: 6px;
+        transition: all .3s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>Crear cuenta</h1>
+      <p>Regístrate para acceder a la documentación y APIs del CRM</p>
+    </div>
+    <div class="auth-body">
+      <div class="privacy-box">
+        🔒 <strong>Aviso de Privacidad</strong><br>
+        Al registrarte aceptas que tu actividad en el portal (IP, dispositivo, endpoints 
+        consultados, fecha y hora) será registrada en nuestra base de datos con fines de 
+        seguridad, auditoría y control de acceso. Esta información no será compartida 
+        con terceros.
+      </div>
+
+      <div class="alert alert-error" id="alert-error"></div>
+      <div class="alert alert-success" id="alert-success"></div>
+
+      <div class="form-group">
+        <label>Nombre completo *</label>
+        <input type="text" id="nombre" placeholder="Juan García López" autocomplete="name" />
+        <div class="field-error" id="err-nombre"></div>
+      </div>
+      <div class="form-group">
+        <label>Correo electrónico *</label>
+        <input type="email" id="email" placeholder="juan@empresa.com" autocomplete="email" />
+        <div class="field-error" id="err-email"></div>
+      </div>
+      <div class="form-group">
+        <label>Contraseña * (mínimo 8 caracteres)</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="new-password"
+               oninput="checkStrength(this.value)" />
+        <div class="pass-strength" id="pass-bar" style="background:#ff4d6d;width:0%"></div>
+        <div class="field-error" id="err-password"></div>
+      </div>
+
+      <div class="terms-row">
+        <input type="checkbox" id="terminos" />
+        <label for="terminos">
+          He leído y acepto el <strong>Aviso de Privacidad</strong> y los 
+          <strong>Términos y Condiciones</strong>. Entiendo que mi actividad en el portal 
+          será monitoreada y registrada por motivos de seguridad.
+        </label>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-register" onclick="doRegister()">
+        Crear cuenta
+      </button>
+
+      <div class="form-footer">
+        ¿Ya tienes cuenta? <a href="/portal/login">Iniciar sesión</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  window.checkStrength = function(pw) {
+    const bar = document.getElementById('pass-bar');
+    if (!bar) return;
+    if (!pw) { bar.style.width = '0'; bar.style.background = '#ff4d6d'; return; }
+    
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^a-zA-Z0-9]/.test(pw)) score++;
+
+    const colors = ['', '#ff4d6d', '#f97316', '#eab308', '#00e5a0', '#00e5a0'];
+    const widths = ['0%', '20%', '40%', '60%', '80%', '100%'];
+    bar.style.background = colors[score] || '#ff4d6d';
+    bar.style.width = widths[score] || '20%';
+  };
+
+  window.doRegister = async function() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const terminos = document.getElementById('terminos').checked;
+    const btn = document.getElementById('btn-register');
+
+    // Limpiar errores
+    ['nombre', 'email', 'password'].forEach(f => {
+      const el = document.getElementById('err-' + f);
+      if (el) el.style.display = 'none';
+    });
+    const alertError = document.getElementById('alert-error');
+    const alertSuccess = document.getElementById('alert-success');
+    if (alertError) alertError.classList.remove('show');
+    if (alertSuccess) alertSuccess.classList.remove('show');
+
+    if (!terminos) {
+      if (alertError) {
+        alertError.textContent = 'Debes aceptar los términos y condiciones.';
+        alertError.classList.add('show');
+      }
+      return;
+    }
+
+    if (password.length < 8) {
+      const errPass = document.getElementById('err-password');
+      if (errPass) {
+        errPass.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+        errPass.style.display = 'block';
+      }
+      return;
+    }
+
+    btn.textContent = 'Registrando...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre_completo: nombre, email, password, acepto_terminos: terminos })
+      });
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch(e) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      if (res.ok && data.success) {
+        if (alertSuccess) {
+          alertSuccess.textContent = '✓ Cuenta creada. Redirigiendo al login...';
+          alertSuccess.classList.add('show');
+        }
+        setTimeout(() => window.location.href = '/portal/login', 2000);
+      } else {
+        // Mostrar errores de campo
+        if (data.fields) {
+          Object.entries(data.fields).forEach(([field, msg]) => {
+            const key = field === 'nombre_completo' ? 'nombre' : field;
+            const el = document.getElementById('err-' + key);
+            if (el) {
+              el.textContent = msg;
+              el.style.display = 'block';
+            }
+          });
+        }
+        if (alertError) {
+          alertError.textContent = data.error || 'Error al registrar. Intenta nuevamente.';
+          alertError.classList.add('show');
+        }
+      }
+    } catch (err) {
+      console.error('Register error:', err);
+      if (alertError) {
+        alertError.textContent = 'Error de conexión.';
+        alertError.classList.add('show');
+      }
+    } finally {
+      btn.textContent = 'Crear cuenta';
+      btn.disabled = false;
+    }
+  };
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}CRM API Portal{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">CRM<span>/</span>API<span>/</span>PORTAL</div>
+    <div class="navbar-links" id="nav-links">
+      <a href="/portal/docs">📄 Docs</a>
+      <a href="/portal/reportes">📊 Reportes</a>
+      <a href="#" id="nav-logout" style="display:none" onclick="logout()">🚪 Salir</a>
+      <a href="/portal/login" id="nav-login">🔑 Login</a>
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <footer class="footer">
+    ⚠ Toda actividad en este portal es registrada con fines de seguridad y auditoría.
+    &nbsp;|&nbsp; CRM Ing Software &copy; 2025
+  </footer>
+
+  <script src="/static/js/base.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

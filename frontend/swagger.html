@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}API Docs — CRM Portal{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+<style>
+    /* Asegurar que Swagger UI sea responsive */
+    .swagger-ui {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+    .swagger-ui .wrapper {
+        padding: 0 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="docs-wrap">
+  <div class="docs-header">
+    <h1>📄 Documentación de APIs</h1>
+    <p>Explora y prueba todos los endpoints disponibles del CRM. Tu actividad queda registrada.</p>
+  </div>
+
+  <div class="auth-banner" id="auth-banner">
+    ⚠ No has iniciado sesión. 
+    <a href="/portal/login" style="color:inherit;font-weight:700">Inicia sesión</a> 
+    para obtener tu token y probar las APIs.
+  </div>
+
+  <div id="swagger-ui"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+
+<script>
+  (function() {
+    const token = localStorage.getItem('api_token');
+    const authBanner = document.getElementById('auth-banner');
+    
+    if (!token && authBanner) {
+      authBanner.classList.add('show');
+    }
+
+    // Inicializar Swagger UI
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: '/api/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: 'StandaloneLayout',
+        persistAuthorization: true,
+        requestInterceptor: (req) => {
+          const savedToken = localStorage.getItem('api_token');
+          if (savedToken && !req.headers['Authorization']) {
+            req.headers['Authorization'] = 'Bearer ' + savedToken;
+          }
+          return req;
+        }
+      });
+
+      // Auto-authorize con el token guardado
+      if (token) {
+        ui.preauthorizeApiKey('BearerAuth', token);
+      }
+
+      window.ui = ui;
+    };
+  })();
+</script>
+{% endblock %}

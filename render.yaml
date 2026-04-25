@@ -1,0 +1,33 @@
+# render.yaml — Configuración de despliegue en Render
+# Documentación: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: crm-api-portal
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT --timeout 120
+    plan: free
+
+    # Variables de entorno — Los valores se configuran en el Dashboard de Render
+    # NO pongas valores reales aquí, solo los nombres de las variables
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: JWT_EXPIRY_HOURS
+        value: "8"
+      - key: LOGIN_MAX_ATTEMPTS
+        value: "5"
+      - key: LOGIN_WINDOW_SEC
+        value: "60"
+
+      # ⚠️ Estos DEBES configurarlos manualmente en el Dashboard de Render:
+      # Settings → Environment Variables → Add Environment Variable
+      #
+      # SECRET_KEY          → genera con: python -c "import secrets; print(secrets.token_hex(32))"
+      # SUPABASE_DB_HOST    → db.TUPROYECTO.supabase.co
+      # SUPABASE_DB_PASSWORD → tu password de Supabase
+      # CORS_ORIGINS        → https://tu-app.onrender.com
