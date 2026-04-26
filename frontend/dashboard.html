@@ -24,7 +24,7 @@
       <p>Consulta el historial de accesos a las APIs: IP, dispositivo, endpoints y fechas. Exporta a CSV.</p>
       <div class="arrow">→ Ver reportes</div>
     </a>
-    <div class="card" onclick="copyToken()">
+    <div class="card" id="token-card">
       <div class="card-icon">🔑</div>
       <h3>Mi Token JWT</h3>
       <p>Tu token de acceso para autenticarte en las APIs. Válido por 8 horas. Haz clic para copiarlo.</p>
@@ -32,11 +32,10 @@
     </div>
   </div>
 
-  <!-- Token Box — oculta el token completo por seguridad -->
   <div class="token-box">
     <h3>Token de acceso</h3>
     <div class="token-display" id="token-display">—</div>
-    <button class="copy-btn" onclick="copyToken()">📋 Copiar token al portapapeles</button>
+    <button class="copy-btn" id="copy-btn">📋 Copiar token al portapapeles</button>
   </div>
 
   <div class="privacy-card">
@@ -48,38 +47,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  (function() {
-    if (!window.checkAuth) { window.location.href = '/portal/login'; return; }
-    if (!checkAuth()) return;
-
-    const token = localStorage.getItem('api_token');
-    const user  = JSON.parse(localStorage.getItem('api_user') || 'null');
-
-    const nombre = user?.nombre_completo || user?.nombre || 'Usuario';
-    const el = (id) => document.getElementById(id);
-
-    if (el('welcome-name'))  el('welcome-name').textContent  = 'Hola, ' + nombre.split(' ')[0];
-    if (el('welcome-email')) el('welcome-email').textContent = user?.email || '';
-    if (el('avatar'))        el('avatar').textContent        = nombre.charAt(0).toUpperCase();
-
-    // Mostrar token truncado — nunca el completo en pantalla
-    const tokenDisplay = el('token-display');
-    if (tokenDisplay && token) {
-      tokenDisplay.textContent = token.slice(0, 20) + '••••••••••••••••••••••••••••••' + token.slice(-10);
-    }
-
-    window.copyToken = function() {
-      if (!token) return;
-      navigator.clipboard.writeText(token).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        if (btn) {
-          const orig = btn.textContent;
-          btn.textContent = '✓ ¡Copiado!';
-          setTimeout(() => btn.textContent = orig, 2000);
-        }
-      });
-    };
-  })();
-</script>
+<script src="/static/js/dashboard.js"></script>
 {% endblock %}
