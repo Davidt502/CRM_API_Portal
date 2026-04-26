@@ -1,4 +1,4 @@
-"""
+""""
 app.py — Portal de APIs Seguro v2 (Supabase + Render)
 """
 import sys
