@@ -62,8 +62,7 @@ def set_security_headers(response):
     response.headers["X-XSS-Protection"]         = "1; mode=block"
     response.headers["Referrer-Policy"]           = "strict-origin-when-cross-origin"
 
-    csp_scripts = "'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net" if DEBUG else \
-                  "'self' https://unpkg.com https://cdn.jsdelivr.net"
+    csp_scripts = "'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net"
 
     response.headers["Content-Security-Policy"] = (
         f"default-src 'self'; "
